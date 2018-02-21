@@ -23,6 +23,7 @@ import (
 	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider"
 	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider/aws"
 	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider/azure"
+	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider/dummy"
 	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider/gce"
 	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider/kubemark"
 	"k8s.io/client-go/informers"
@@ -38,6 +39,7 @@ import (
 var AvailableCloudProviders = []string{
 	aws.ProviderName,
 	azure.ProviderName,
+	dummy.ProviderName,
 	gce.ProviderNameGCE,
 	gce.ProviderNameGKE,
 	kubemark.ProviderName,
@@ -83,6 +85,8 @@ func (b CloudProviderBuilder) Build(discoveryOpts cloudprovider.NodeGroupDiscove
 		return b.buildAWS(discoveryOpts, resourceLimiter)
 	case azure.ProviderName:
 		return b.buildAzure(discoveryOpts, resourceLimiter)
+	case dummy.ProviderName:
+		return b.buildDummy(discoveryOpts, resourceLimiter)
 	case kubemark.ProviderName:
 		return b.buildKubemark(discoveryOpts, resourceLimiter)
 	case "":
@@ -162,6 +166,19 @@ func (b CloudProviderBuilder) buildAzure(do cloudprovider.NodeGroupDiscoveryOpti
 	provider, err := azure.BuildAzureCloudProvider(manager, rl)
 	if err != nil {
 		glog.Fatalf("Failed to create Azure cloud provider: %v", err)
+	}
+	return provider
+}
+
+func (b CloudProviderBuilder) buildDummy(do cloudprovider.NodeGroupDiscoveryOptions, rl *cloudprovider.ResourceLimiter) cloudprovider.CloudProvider {
+	glog.Info("Creating Dummy Manager with default configuration.")
+	manager, err := dummy.CreateDummyManager(nil, do)
+	if err != nil {
+		glog.Fatalf("Failed to create Dummy Manager: %v", err)
+	}
+	provider, err := dummy.BuildDummyCloudProvider(manager, rl)
+	if err != nil {
+		glog.Fatalf("Failed to create Dummy cloud provider: %v", err)
 	}
 	return provider
 }
