@@ -171,8 +171,19 @@ func (b CloudProviderBuilder) buildAzure(do cloudprovider.NodeGroupDiscoveryOpti
 }
 
 func (b CloudProviderBuilder) buildDummy(do cloudprovider.NodeGroupDiscoveryOptions, rl *cloudprovider.ResourceLimiter) cloudprovider.CloudProvider {
-	glog.Info("Creating Dummy Manager with default configuration.")
-	manager, err := dummy.CreateDummyManager(nil, do)
+	var config io.ReadCloser
+	if b.cloudConfig != "" {
+		glog.Info("Creating Dummy Manager with config file: %v", b.cloudConfig)
+		var err error
+		config, err = os.Open(b.cloudConfig)
+		if err != nil {
+			glog.Fatalf("Failed to open config file %s, %#v", b.cloudConfig, err)
+		}
+		defer config.Close()
+	} else {
+		glog.Info("Creating Dummy Manager with default configuration.")
+	}
+	manager, err := dummy.CreateDummyManager(config, do)
 	if err != nil {
 		glog.Fatalf("Failed to create Dummy Manager: %v", err)
 	}

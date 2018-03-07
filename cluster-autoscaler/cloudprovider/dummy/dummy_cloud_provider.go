@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang/glog"
 	apiv1 "k8s.io/api/core/v1"
+	"gopkg.in/gcfg.v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/autoscaler/cluster-autoscaler/cloudprovider"
 	"k8s.io/autoscaler/cluster-autoscaler/utils/errors"
@@ -16,6 +17,12 @@ import (
 const ProviderName = "dummy"
 
 type DummyManager struct {
+}
+
+type Config struct {
+	Foo struct {
+		Bar string
+	}
 }
 
 type DummyCloudProvider struct {
@@ -31,6 +38,13 @@ type DummyNodeGroup struct {
 }
 
 func CreateDummyManager(configReader io.Reader, discoveryOpts cloudprovider.NodeGroupDiscoveryOptions) (*DummyManager, error) {
+	if configReader != nil {
+		var config Config
+		if err := gcfg.ReadInto(&config, configReader); err != nil {
+			glog.Errorf("Couldn't read config: %v", err)
+			return nil, err
+		}
+	}	
 	return &DummyManager{}, nil
 }
 
